@@ -91,13 +91,13 @@ class Calculator (Frame):
         self.number_field.insert(0.0, str(self.crnt_numb))
         # for some reason the numbers appear on line 1, but column 0
         if self.number_field.get(1.0, 1.5) == "1488":
-            self.photo = PhotoImage(file="sw")
+            self.photo = PhotoImage(file="src/sw")
             new_window = Toplevel()
             new_window.title("heil")
             label = Label(new_window, bg="red", image=self.photo)
             label.grid()
         if self.number_field.get(1.0, 1.4) == "228":
-            self.photo = PhotoImage(file="manager.gif")
+            self.photo = PhotoImage(file="src/mn")
             new_window = Toplevel()
             new_window.title("smoek weed evry day")
             label = Label(master=new_window, image=self.photo)
