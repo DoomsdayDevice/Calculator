@@ -1,321 +1,214 @@
 from tkinter import *
-import inspect
 
-##myFile = open("logs.txt")
-##print(myFile.read())
 
-class Calc (Frame):
+class Calculator (Frame):
     """creates a frame inside the window"""
-    def __init__ (self, base):
-        Frame.__init__(self, base)
-        base.geometry("305x450")
+    def __init__(self, window):
+        Frame.__init__(self, window)
+        window.geometry("305x450")
+        window.title("SkyNet v1.1")
+        window.resizable(False, False)
+
         self.grid()
-       # self.muhLabel = Label(self, text = "Hello Bitches!")
-        self.createWidgets()
-        self.updateText()
-    def createWidgets(self):
-        """creates the current number field"""
-        # current number field
-        #has to have numbers and the sign
-        self.currNumb = DoubleVar()
-        self.currNumb = 0
-        self.currOpMemo = None
-        self.pointIsPressed = False
-        self.currentNumber = Text(self, width = 35, height = 1)
-        self.currentNumber.grid(row = 0, column = 0, columnspan = 4,
-                                padx = 10, pady = 10)
+        self.x = 0
+        self.y = 0
+        self.create_variables()
+        self.create_widgets()
+        self.create_buttons()
+        self.update_text()
+        # self.updateText()
 
-        #current operation field, set as a variable, label updates automatically
-        self.currentOp = StringVar()
-        self.currentOp.set("")
-        self.currOp = IntVar()
+    def create_variables(self):
+        # the current number
+        self.crnt_numb = DoubleVar()
+        self.crnt_numb = 0
+        # the number that was put into memory, the one before the operation button was pressed
+        self.first_number = None
+        self.point_is_pressed = False
+        # current operation field, set as a variable, label updates automatically
+        self.crnt_op_field = StringVar()
+        self.crnt_op_field.set("0")
 
-        Label(self, textvariable = self.currentOp).grid(row = 1, column = 0,
-                                                        columnspan = 4,
-                                                        padx = 5, pady = 5, sticky = E)
+    def create_widgets(self):
+        # the number field at the top
+        self.number_field = Text(self, width=35, height=1)
+        self.number_field.grid(row=self.y, column=self.x, columnspan=4, sticky=E, padx=10, pady=10)
+        self.y += 1
 
-        #the "clear" button
-        self.clearButt = Button(self, text = "C", command = self.clearFields,
-                                height = 3, width = 17)
-        self.clearButt.grid(row = 3, column = 0, pady = 6, padx = 2, columnspan = 2)
+        Label(self, textvariable=self.crnt_op_field).grid(row=1, column=self.x, columnspan=4, padx=5, pady=5, sticky=E)
+        self.y += 1
 
+    def create_buttons(self):
+        # number buttons
 
-        #divide
-        self.divideButt = Button(self, text = ":", command = self.divide,
-                                height = 3, width = 6)
-        self.divideButt.grid(row = 3, column = 2, pady = 10, padx = 10)
-        #multiply
-        self.multiButt = Button(self, text = "X", command = self.multiply,
-                                height = 3, width = 6)
-        self.multiButt.grid(row = 3, column = 3, pady = 10, padx = 10)
-        #add
-        self.addButt = Button(self, text = "+", command = self.add,
-                                height = 8, width = 6)
-        self.addButt.grid(row = 5, column = 3, pady = 10, padx = 10, rowspan = 2)
-        #subtract
-        self.subtractButt = Button(self, text = "-", command = self.subtract,
-                                height = 3, width = 6)
-        self.subtractButt.grid(row = 4, column = 3, pady = 6, padx = 2)
+        # clearing the field
+        self.clear_fields_bt = CalcButton(text="CLEAR", fg="red",
+                                          parent=self, width=17, columnspan=2, command="self.clear_fields")
+        self.y += 1
+        # digit buttons
+        self.digit_buttons = []
+        counter = 1
+        for i in range(0, 3):
+            for j in range(0, 3):
+                self.create_digit(counter)
+                counter += 1
+                self.x += 1
+            self.x = 0
+            self.y += 1
 
+        self.x = 0
+        self.y = 6
+        self.create_digit(0)
+        # point button
+        self.x += 1
+        self.point_button = CalcButton(text=".", parent=self, command="self.point")
+        # sign button
+        self.x += 1
+        self.sign_button = CalcButton(text="-/+", parent=self, command="self.sign")
 
+        # division
+        self.y = 2
+        self.division_button = CalcButton(text=":", parent=self, command="self.divide")
+        # multiplication
+        self.x += 1
+        self.multi_button = CalcButton(text="X", parent=self, command="self.multi")
+        # subtraction
+        self.y += 1
+        self.subtraction_button = CalcButton(text="-", parent=self, command="self.subtract")
+        # addition
+        self.y += 1
+        self.add_button = CalcButton(text="+", parent=self, height=8, rowspan=2, command="self.add")
+        # inference
+        self.y += 2
+        self.infer_button = CalcButton(text="=", parent=self, command="self.infer")
 
+    def create_digit(self, i):
+        self.digit_buttons.append(DigitButton(text=i, digit=i, parent=self, command="self.digit_button"))
 
-        #change sign
-        self.signButt = Button(self, text = "-/+", command = self.changeSign,
-                                height = 3, width = 6)
-        self.signButt.grid(row = 7, column = 2, pady = 6, padx = 2)
-        #point sign
-        self.pointButt = Button(self, text = ".", command = self.point,
-                                height = 3, width = 6)
-        self.pointButt.grid(row = 7, column = 1, pady = 10, padx = 10)
-        #equal sign
-        self.equalButt = Button(self, text = "=", command = self.equal,
-                                height = 3, width = 6)
-        self.equalButt.grid(row = 7, column = 3, pady = 10, padx = 10)
-
-
-
-        #digits from 0 to 9
-        self.digitZero = Button(self, text = "0", command = self.pressZero,
-                                height = 3, width = 6)
-        self.digitZero.grid(row = 7, column = 0, pady = 6, padx = 2)
-        #1
-        self.digitOne = Button(self, text = "1", command = self.pressOne,
-                                height = 3, width = 6)
-        self.digitOne.grid(row = 4, column = 0, pady = 6, padx = 2)
-        #2
-        self.digitTwo = Button(self, text = "2", command = self.pressTwo,
-                                height = 3, width = 6)
-        self.digitTwo.grid(row = 4, column = 1, pady = 6, padx = 2)
-
-        #3
-        self.digitThree = Button(self, text = "3", command = self.pressThree,
-                                height = 3, width = 6)
-        self.digitThree.grid(row = 4, column = 2, pady = 6, padx = 2)
-
-        #4
-        self.digitFour = Button(self, text = "4", command = self.pressFour,
-                                height = 3, width = 6)
-        self.digitFour.grid(row = 5, column = 0, pady = 6, padx = 2)
-
-        #5
-        self.digitFive = Button(self, text = "5", command = self.pressFive,
-                                height = 3, width = 6)
-        self.digitFive.grid(row = 5, column = 1, pady = 6, padx = 2)
-
-        #6
-        self.digitSix = Button(self, text = "6", command = self.pressSix,
-                                height = 3, width = 6)
-        self.digitSix.grid(row = 5, column = 2, pady = 6, padx = 2)
-
-        #7
-        self.digitSeven = Button(self, text = "7", command = self.pressSeven,
-                                height = 3, width = 6)
-        self.digitSeven.grid(row = 6, column = 0, pady = 6, padx = 2)
-
-        #8
-        self.digitEight = Button(self, text = "8", command = self.pressEight,
-                                height = 3, width = 6)
-        self.digitEight.grid(row = 6, column = 1, pady = 6, padx = 2)
-        #9
-        self.digitNine = Button(self, text = "9", command = self.pressNine,
-                                height = 3, width = 6)
-        self.digitNine.grid(row = 6, column = 2, pady = 6, padx = 2)
-
-    def clearFields(self):
-        self.currentNumber.delete(0.0, END)
-        self.currentOp.set("")
-        self.currNumb = 0
-        self.currOpMemo = None
-        self.unPoint()
-
-
-    def changeSign(self):
-        # changes the sign of the current number
-        if self.currNumb < 0:
-            self.currNumb = abs(self.currNumb)
-        else:
-            self.currNumb = 0 - self.currNumb
-        self.updateText()
-
-
-    def point(self):
-        self.pointIsPressed = True
-        self.pointButt.config(bg="grey")
-
-
-    def unPoint(self):
-        self.pointIsPressed = False
-        self.pointButt.config(bg="SystemButtonFace")
-        ##        print("unpointed")
-
-
-    def updateText(self):
+    def update_text(self):
         # updates text in the number field
-        self.currentNumber.delete(0.0, END)
-        self.currentNumber.insert(0.0, str(self.currNumb))
+        self.number_field.delete(0.0, END)
+        self.number_field.insert(0.0, str(self.crnt_numb))
+        # for some reason the numbers appear on line 1, but column 0
+        if self.number_field.get(1.0, 1.5) == "1488":
+            self.photo = PhotoImage(file="sw")
+            new_window = Toplevel()
+            new_window.title("heil")
+            label = Label(new_window, bg="red", image=self.photo)
+            label.grid()
+        if self.number_field.get(1.0, 1.4) == "228":
+            self.photo = PhotoImage(file="manager.gif")
+            new_window = Toplevel()
+            new_window.title("smoek weed evry day")
+            label = Label(master=new_window, image=self.photo)
+            label.pack()
 
 
-    def pressOne(self):
-        if self.pointIsPressed and float(self.currNumb).is_integer():
-            self.currNumb = float(str(self.currNumb) + ".1")
-        elif self.pointIsPressed:
-            self.currNumb = float(str(self.currNumb) + "1")
+class CalcButton(Button):
+    def __init__(self, text, parent, command="self.press", columnspan=1, rowspan=1, width=6, height=3, fg="black"):
+        # using "eval" to convert the string passed down into an object reference
+        Button.__init__(self, master=parent, width=width, height=height, text=text, command=eval(command), fg=fg)
+        self.grid(column=parent.x, row=parent.y, pady=6, padx=2, columnspan=columnspan, rowspan=rowspan)
+        self.parent = parent
+
+    def clear_fields(self):
+        self.parent.number_field.delete(0.0, END)
+        self.parent.number_field.insert(0.0, '0')
+        self.parent.crnt_op_field.set("0")
+        self.parent.crnt_numb = 0
+        self.parent.first_number = None
+        self.unpoint()
+
+    """point button funcs"""
+    def point(self):
+        self.parent.point_is_pressed = True
+        self.parent.point_button.config(bg="grey")
+
+    def unpoint(self):
+        self.parent.point_is_pressed = False
+        self.parent.point_button.config(bg="SystemButtonFace")
+
+    def press(self): pass
+
+    def sign(self):
+        if self.parent.crnt_numb < 0:
+            self.parent.crnt_numb = abs(self.parent.crnt_numb)
         else:
-            self.currNumb = self.currNumb * 10 + 1
-        self.updateText()
-
-
-    def pressTwo(self):
-        if self.pointIsPressed and float(self.currNumb).is_integer():
-            self.currNumb = float(str(self.currNumb) + ".2")
-        elif self.pointIsPressed:
-            self.currNumb = float(str(self.currNumb) + "2")
-        else:
-            self.currNumb = self.currNumb * 10 + 2
-        self.updateText()
-
-
-    def pressThree(self):
-        if self.pointIsPressed and float(self.currNumb).is_integer():
-            self.currNumb = float(str(self.currNumb) + ".3")
-        elif self.pointIsPressed:
-            self.currNumb = float(str(self.currNumb) + "3")
-        else:
-            self.currNumb = self.currNumb * 10 + 3
-        self.updateText()
-
-
-    def pressFour(self):
-        if self.pointIsPressed and float(self.currNumb).is_integer():
-            self.currNumb = float(str(self.currNumb) + ".4")
-        elif self.pointIsPressed:
-            self.currNumb = float(str(self.currNumb) + "4")
-        else:
-            self.currNumb = self.currNumb * 10 + 4
-        self.updateText()
-
-
-    def pressFive(self):
-        if self.pointIsPressed and float(self.currNumb).is_integer():
-            self.currNumb = float(str(self.currNumb) + ".5")
-        elif self.pointIsPressed:
-            self.currNumb = float(str(self.currNumb) + "5")
-        else:
-            self.currNumb = self.currNumb * 10 + 5
-        self.updateText()
-
-
-    def pressSix(self):
-        if self.pointIsPressed and float(self.currNumb).is_integer():
-            self.currNumb = float(str(self.currNumb) + ".6")
-        elif self.pointIsPressed:
-            self.currNumb = float(str(self.currNumb) + "6")
-        else:
-            self.currNumb = self.currNumb * 10 + 6
-        self.updateText()
-
-
-    def pressSeven(self):
-        if self.pointIsPressed and float(self.currNumb).is_integer():
-            self.currNumb = float(str(self.currNumb) + ".7")
-        elif self.pointIsPressed:
-            self.currNumb = float(str(self.currNumb) + "7")
-        else:
-            self.currNumb = self.currNumb * 10 + 7
-        self.updateText()
-
-
-    def pressEight(self):
-        if self.pointIsPressed and float(self.currNumb).is_integer():
-            self.currNumb = float(str(self.currNumb) + ".8")
-        elif self.pointIsPressed:
-            self.currNumb = float(str(self.currNumb) + "8")
-        else:
-            self.currNumb = self.currNumb * 10 + 8
-        self.updateText()
-
-
-    def pressNine(self):
-        if self.pointIsPressed and float(self.currNumb).is_integer():
-            self.currNumb = float(str(self.currNumb) + ".9")
-        elif self.pointIsPressed:
-            self.currNumb = float(str(self.currNumb) + "9")
-        else:
-            self.currNumb = self.currNumb * 10 + 9
-        self.updateText()
-
-
-    def pressZero(self):
-        if self.pointIsPressed and float(self.currNumb).is_integer():
-            self.currNumb = float(str(self.currNumb) + ".0")
-        elif self.pointIsPressed:
-            self.currNumb = float(str(self.currNumb) + "0")
-        else:
-            self.currNumb = self.currNumb * 10 + 0
-        self.updateText()
-
+            self.parent.crnt_numb = 0 - self.parent.crnt_numb
+        self.parent.update_text()
 
     def divide(self):
-        if self.currOpMemo == None:
-            self.currOpMemo = self.currNumb
-            self.currentOp.set(str(self.currNumb) + " : ")
-            self.currSign = ":"
-            self.currNumb = 0
-            self.unPoint()
+        if self.parent.first_number is None:
+            self.parent.first_number = self.parent.crnt_numb
+            self.parent.crnt_op_field.set(str(self.parent.crnt_numb) + " : ")
+            self.parent.crnt_sign = ":"
+            self.parent.crnt_numb = 0
+            self.unpoint()
         else:
-            self.equal()
+            self.infer()
 
-
-    def multiply(self):
-        if self.currOpMemo == None:
-            self.currOpMemo = self.currNumb
-            self.currentOp.set(str(self.currNumb) + " X ")
-            self.currSign = "x"
-            self.currNumb = 0
-            self.unPoint()
+    def multi(self):
+        if self.parent.first_number is None:
+            self.parent.first_number = self.parent.crnt_numb
+            self.parent.crnt_op_field.set(str(self.parent.crnt_numb) + " X ")
+            self.parent.crnt_sign = "x"
+            self.parent.crnt_numb = 0
+            self.unpoint()
         else:
-            self.equal()
-
-
-    def add(self):
-        if self.currOpMemo == None:
-            self.currOpMemo = self.currNumb
-            self.currentOp.set(str(self.currNumb) + " + ")
-            self.currSign = "+"
-            self.currNumb = 0
-            self.unPoint()
-        else:
-            self.equal()
-
+            self.infer()
 
     def subtract(self):
-        if self.currOpMemo == None:
-            self.currOpMemo = self.currNumb
-            self.currentOp.set(str(self.currNumb) + " - ")
-            self.currSign = "-"
-            self.currNumb = 0
-            self.unPoint()
+        if self.parent.first_number is None:
+            self.parent.first_number = self.parent.crnt_numb
+            self.parent.crnt_op_field.set(str(self.parent.crnt_numb) + " - ")
+            self.parent.crnt_sign = "-"
+            self.parent.crnt_numb = 0
+            self.unpoint()
         else:
-            self.equal()
+            self.infer()
+
+    def add(self):
+        if self.parent.first_number is None:
+            self.parent.first_number = self.parent.crnt_numb
+            self.parent.crnt_op_field.set(str(self.parent.crnt_numb) + " + ")
+            self.parent.crnt_sign = "+"
+            self.parent.crnt_numb = 0
+            self.unpoint()
+        else:
+            self.infer()
+
+    def infer(self):
+        if self.parent.crnt_sign == ":":
+            self.parent.first_number = self.parent.first_number / self.parent.crnt_numb
+        elif self.parent.crnt_sign == "x":
+            self.parent.first_number = self.parent.first_number * self.parent.crnt_numb
+        elif self.parent.crnt_sign == "+":
+            self.parent.first_number = self.parent.first_number + self.parent.crnt_numb
+        elif self.parent.crnt_sign == "-":
+            self.parent.first_number = self.parent.first_number - self.parent.crnt_numb
+        self.parent.crnt_op_field.set(self.parent.crnt_op_field.get() +
+                                      str(self.parent.crnt_numb) + " = " + str(self.parent.first_number))
+        self.parent.first_number = None
+        self.parent.crnt_numb = 0
+        self.unpoint()
 
 
-    def equal(self):
-        if self.currSign == ":":
-            self.currOpMemo = self.currOpMemo / self.currNumb
-        elif self.currSign == "x":
-            self.currOpMemo = self.currOpMemo * self.currNumb
-        elif self.currSign == "+":
-            self.currOpMemo = self.currOpMemo + self.currNumb
-        elif self.currSign == "-":
-            self.currOpMemo = self.currOpMemo - self.currNumb
-        self.currentOp.set(self.currentOp.get() + str(self.currNumb) + " = " + str(self.currOpMemo))
-        self.currOpMemo = None
-        self.currNumb = 0
-        self.unPoint()
+class DigitButton(CalcButton):
+    # digits
+    def __init__(self, digit, **kwargs):
+        CalcButton.__init__(self, **kwargs)
+        self.digit = digit
 
-myBase = Tk()
-myBase.title("SkyNet v1.0")
-myBase.resizable(False, False)
-myCalc = Calc(myBase)
-myBase.mainloop()
+    def digit_button(self):
+        if self.parent.point_is_pressed and float(self.parent.crnt_numb).is_integer():
+            self.parent.crnt_numb = float(str(self.parent.crnt_numb) + ".%s" % self.digit)
+        elif self.parent.point_is_pressed:
+            self.parent.crnt_numb = float(str(self.parent.crnt_numb) + "%s" % self.digit)
+        else:
+            self.parent.crnt_numb = int(str(self.parent.crnt_numb) + str(self.digit))
+        self.parent.update_text()
+
+
+my_window = Tk()
+my_calc = Calculator(my_window)
+my_window.mainloop()
