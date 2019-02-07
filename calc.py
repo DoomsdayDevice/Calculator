@@ -5,19 +5,21 @@ class Calculator (Frame):
     """creates a frame inside the window"""
     def __init__(self, window):
         Frame.__init__(self, window)
-        window.geometry("305x450")
+        # self.width = 275
+        # self.height = 500
+        # window.geometry("%sx%s" % (self.width, self.height))
         window.title("SkyNet v1.1")
         window.resizable(False, False)
 
-        self.grid()
+        self.grid(padx=10, pady=10)
         self.x = 0
         self.y = 0
         self.create_variables()
         self.create_widgets()
         self.create_buttons()
         self.update_text()
-        # self.updateText()
-
+        # making the first row stretch
+        window.rowconfigure(1, weight=1)
     def create_variables(self):
         # the current number
         self.crnt_numb = DoubleVar()
@@ -28,14 +30,23 @@ class Calculator (Frame):
         # current operation field, set as a variable, label updates automatically
         self.crnt_op_field = StringVar()
         self.crnt_op_field.set("0")
+        # the top field
+        self.crnt_number_field = StringVar()
+        self.crnt_number_field.set("0")
 
     def create_widgets(self):
         # the number field at the top
-        self.number_field = Text(self, width=35, height=1)
-        self.number_field.grid(row=self.y, column=self.x, columnspan=4, sticky=E, padx=10, pady=10)
+        self.number_frame = Frame(self, bg="white", width=100)
+        self.number_frame.grid(row=self.y, column=self.x, columnspan=4, sticky=E+W, padx=5, pady=5)
+
+        self.number_field = Label(self.number_frame, textvariable=self.crnt_number_field,
+                                  font=("helvetica", 20), bg="white")
+        self.number_field.pack(padx=5, side=RIGHT)
         self.y += 1
 
-        Label(self, textvariable=self.crnt_op_field).grid(row=1, column=self.x, columnspan=4, padx=5, pady=5, sticky=E)
+        # the field that tracks the current operation
+        Label(self, textvariable=self.crnt_op_field, font=("helvetica", 12)).grid(row=1, column=self.x, columnspan=4,
+                                                                                  padx=5, pady=5, sticky=E)
         self.y += 1
 
     def create_buttons(self):
@@ -43,7 +54,7 @@ class Calculator (Frame):
 
         # clearing the field
         self.clear_fields_bt = CalcButton(text="CLEAR", fg="red",
-                                          parent=self, width=17, columnspan=2, command="self.clear_fields")
+                                          parent=self, width=15, columnspan=2, command="self.clear_fields")
         self.y += 1
         # digit buttons
         self.digit_buttons = []
@@ -87,16 +98,15 @@ class Calculator (Frame):
 
     def update_text(self):
         # updates text in the number field
-        self.number_field.delete(0.0, END)
-        self.number_field.insert(0.0, str(self.crnt_numb))
+        self.crnt_number_field.set(str(self.crnt_numb))
         # for some reason the numbers appear on line 1, but column 0
-        if self.number_field.get(1.0, 1.5) == "1488":
+        if self.crnt_number_field.get == "1488":
             self.photo = PhotoImage(file="src/sw")
             new_window = Toplevel()
             new_window.title("heil")
             label = Label(new_window, bg="red", image=self.photo)
             label.grid()
-        if self.number_field.get(1.0, 1.4) == "228":
+        if self.crnt_number_field.get() == "228":
             self.photo = PhotoImage(file="src/mn")
             new_window = Toplevel()
             new_window.title("smoek weed evry day")
@@ -105,15 +115,16 @@ class Calculator (Frame):
 
 
 class CalcButton(Button):
-    def __init__(self, text, parent, command="self.press", columnspan=1, rowspan=1, width=6, height=3, fg="black"):
+    def __init__(self, parent=None,
+                 text=None,  command="self.press", width=6, height=3, fg="black", font=("helvetica", 12), # args for button.init()
+                 columnspan=1, rowspan=1):  # args for grid()
         # using "eval" to convert the string passed down into an object reference
-        Button.__init__(self, master=parent, width=width, height=height, text=text, command=eval(command), fg=fg)
-        self.grid(column=parent.x, row=parent.y, pady=6, padx=2, columnspan=columnspan, rowspan=rowspan)
+        Button.__init__(self, master=parent, width=width, height=height, text=text, command=eval(command), font=font, fg=fg)
+        self.grid(column=parent.x, row=parent.y, pady=7, padx=5, columnspan=columnspan, rowspan=rowspan)
         self.parent = parent
 
     def clear_fields(self):
-        self.parent.number_field.delete(0.0, END)
-        self.parent.number_field.insert(0.0, '0')
+        self.parent.crnt_number_field.set("0")
         self.parent.crnt_op_field.set("0")
         self.parent.crnt_numb = 0
         self.parent.first_number = None
