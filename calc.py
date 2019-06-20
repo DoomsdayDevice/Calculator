@@ -100,18 +100,18 @@ class Calculator (Frame):
         # updates text in the number field
         self.crnt_number_field.set(str(self.crnt_numb))
         # for some reason the numbers appear on line 1, but column 0
-        if self.crnt_number_field.get == "1488":
-            self.photo = PhotoImage(file="src/sw")
-            new_window = Toplevel()
-            new_window.title("heil")
-            label = Label(new_window, bg="red", image=self.photo)
-            label.grid()
-        if self.crnt_number_field.get() == "228":
-            self.photo = PhotoImage(file="src/mn")
-            new_window = Toplevel()
-            new_window.title("smoek weed evry day")
-            label = Label(master=new_window, image=self.photo)
-            label.pack()
+        # if self.crnt_number_field.get == "1488":
+        #     self.photo = PhotoImage(file="src/sw")
+        #     new_window = Toplevel()
+        #     new_window.title("heil")
+        #     label = Label(new_window, bg="red", image=self.photo)
+        #     label.grid()
+        # if self.crnt_number_field.get() == "228":
+        #     self.photo = PhotoImage(file="src/mn")
+        #     new_window = Toplevel()
+        #     new_window.title("smoek weed evry day")
+        #     label = Label(master=new_window, image=self.photo)
+        #     label.pack()
 
 
 class CalcButton(Button):
